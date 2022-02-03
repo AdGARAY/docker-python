@@ -2,11 +2,27 @@ version: '3.8'
 
 services:
 
+  mysql:
+    container_name: ${PROJECT_NAME}_db
+    platform: linux/x86_64
+    image: 'mysql:5.7'
+    volumes:
+      - './database/data:/var/lib/mysql'
+    ports:
+      - '3308:3306'
+    networks:
+      backend:
+        ipv4_address: 192.20.0.6
+    environment:
+      MYSQL_DATABASE: project
+      MYSQL_ROOT_PASSWORD: password
+
   web:
     container_name: ${PROJECT_NAME}_web
     build: .
     working_dir: /code
-    command: python manage.py runserver 0.0.0.0:8000
+    # command: python manage.py runserver 0.0.0.0:8000
+    command: sh -c "/code/wait-for.sh db:3306 --timeout=60 -- python manage.py migrate;python manage.py runserver 0.0.0.0:8000"
     volumes:
       - .:/code
     ports:
@@ -19,19 +35,7 @@ services:
       backend:
         ipv4_address: 192.20.0.5
 
-  mysql:
-    container_name: ${PROJECT_NAME}_db
-    image: 'mysql:5.7'
-    volumes:
-      - './database/data:/var/lib/mysql'
-    ports:
-      - '3308:3306'
-    networks:
-      backend:
-        ipv4_address: 192.20.0.6
-    environment:
-      MYSQL_DATABASE: project
-      MYSQL_ROOT_PASSWORD: password
+
 
 networks:
   backend:
